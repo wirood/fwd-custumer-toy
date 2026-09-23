@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>FWD Customer Portfolio</title>
+<!-- บังคับโหลดฟอนต์ล่วงหน้า -->
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" as="style">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -567,9 +569,20 @@ async function generateAndOpenLine(firstName, lastName, lineId) {
         canvas.toBlob(async (blob) => {
             const file = new File([blob], `HBD_${firstName}.jpg`, { type: 'image/jpeg' });
             
+            // สร้างฟังก์ชันสำหรับดาวน์โหลดไฟล์รูปภาพ
+            const downloadImage = () => {
+                const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
+                const link = document.createElement('a'); 
+                link.href = finalImageSrc; 
+                link.download = `HBD_${firstName}.jpg`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            };
+
             // ตรวจสอบว่าเปิดจากมือถือ (ที่มีระบบแชร์) ใช่หรือไม่
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
+                    // ดาวน์โหลดรูปภาพก่อนการแชร์
+                    downloadImage();
                     await navigator.share({
                         title: 'สุขสันต์วันเกิด',
                         text: defaultMessage,
@@ -580,11 +593,7 @@ async function generateAndOpenLine(firstName, lastName, lineId) {
                 }
             } else {
                 // สำหรับการใช้งานบนคอมพิวเตอร์ หรือเบราว์เซอร์ที่ไม่รองรับแชร์
-                const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
-                const link = document.createElement('a'); 
-                link.href = finalImageSrc; 
-                link.download = `HBD_${firstName}.jpg`;
-                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                downloadImage();
 
                 let lineUrl = lineId ? `https://line.me/ti/p/~${lineId}` : `https://line.me/R/msg/text/?${encodeURIComponent(defaultMessage)}`;
                 setTimeout(() => { window.open(lineUrl, '_blank'); }, 400);
