@@ -519,31 +519,55 @@ function filtered(){
     })
 }
 
-function generateAndOpenLine(firstName, lastName, lineId) {
+// ------------------------------------------------------------------------------------------
+// อัปเดตใหม่เอี่ยม! ใช้ Web Share API (สำหรับมือถือ) และบังคับรูปไม่เพี้ยน
+// ------------------------------------------------------------------------------------------
+async function generateAndOpenLine(firstName, lastName, lineId) {
     const canvas = document.getElementById('hiddenCanvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     
-    // ตั้งค่าให้ดึงรูปภาพแบบข้ามโดเมนได้ (ป้องกันปัญหาจอขาวบน Cloudflare)
     img.crossOrigin = "Anonymous"; 
     img.src = 'Birthday.jpg'; 
     
+    // 1. บังคับโหลดฟอนต์ให้สมบูรณ์ 100% ป้องกันมือถือคำนวณความกว้างตัวอักษรผิดพลาด
+    await document.fonts.ready;
+    
     img.onload = () => {
-        canvas.width = img.width; canvas.height = img.height;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const fontSize = Math.floor(canvas.width * 0.065); 
-        ctx.font = `600 ${fontSize}px Prompt, sans-serif`; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        // 2. บังคับใช้ขนาดจริงของรูป (naturalWidth) ไม่ใช่ขนาดสเกลตามจอ
+        const imgW = img.naturalWidth || img.width;
+        const imgH = img.naturalHeight || img.height;
+        
+        canvas.width = imgW; 
+        canvas.height = imgH;
+        
+        ctx.drawImage(img, 0, 0, imgW, imgH);
+        
+        const fontSize = Math.floor(imgW * 0.065); 
+        ctx.font = `600 ${fontSize}px Prompt, sans-serif`; 
+        ctx.fillStyle = '#ffffff'; 
+        
+        // 3. กำหนดแกนการวาดที่ตรงกลาง และล็อกทิศทางเพื่อไม่ให้หลุดขอบทางขวา
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle';
+        ctx.direction = 'ltr'; 
+        
         const fullName = `${firstName} ${lastName}`;
-        ctx.shadowColor = "rgba(0,0,0,0.2)"; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; ctx.shadowBlur = 4;
-        ctx.fillText(fullName, canvas.width / 2, canvas.height * 0.315);
+        ctx.shadowColor = "rgba(0,0,0,0.2)"; 
+        ctx.shadowOffsetX = 2; 
+        ctx.shadowOffsetY = 2; 
+        ctx.shadowBlur = 4;
+        
+        // วาดชื่อ-สกุล โดยยึดตำแหน่ง x คือกึ่งกลางความกว้างของรูประดับพิกเซล
+        ctx.fillText(fullName, imgW / 2, imgH * 0.315);
         
         const defaultMessage = `สุขสันต์วันเกิดนะคะคุณ${firstName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`;
 
-        // แปลงภาพแคนวาสให้เป็นไฟล์เพื่อเตรียมส่งแชร์
+        // 4. ระบบการแชร์
         canvas.toBlob(async (blob) => {
             const file = new File([blob], `HBD_${firstName}.jpg`, { type: 'image/jpeg' });
             
-            // ตรวจสอบว่ามือถือรองรับระบบแชร์ไฟล์ตรงๆ หรือไม่ (มือถือส่วนใหญ่รองรับ)
+            // ตรวจสอบว่าเปิดจากมือถือ (ที่มีระบบแชร์) ใช่หรือไม่
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
@@ -552,10 +576,10 @@ function generateAndOpenLine(firstName, lastName, lineId) {
                         files: [file]
                     });
                 } catch (err) {
-                    console.log('ผู้ใช้ยกเลิกการแชร์ หรือเกิดข้อผิดพลาด:', err);
+                    console.log('Cancel share', err);
                 }
             } else {
-                // หากเปิดในคอมพิวเตอร์ (ไม่รองรับระบบแชร์มือถือ) จะใช้ระบบเดิมคือโหลดไฟล์ + เปิดเว็บ LINE
+                // สำหรับการใช้งานบนคอมพิวเตอร์ หรือเบราว์เซอร์ที่ไม่รองรับแชร์
                 const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
                 const link = document.createElement('a'); 
                 link.href = finalImageSrc; 
@@ -567,8 +591,10 @@ function generateAndOpenLine(firstName, lastName, lineId) {
             }
         }, 'image/jpeg', 0.9);
     };
-    img.onerror = () => { alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg' กรุณาตรวจสอบว่าอัปโหลดไฟล์ขึ้นระบบแล้วหรือยัง"); };
+    img.onerror = () => { alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg'"); };
 }
+// ------------------------------------------------------------------------------------------
+
 function checkBirthdays() {
     const today = new Date(); const currentMonth = today.getMonth() + 1; const currentDay = today.getDate();
     const alertContainer = document.getElementById('birthdayAlerts'); alertContainer.innerHTML = '';
