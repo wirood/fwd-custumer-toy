@@ -109,6 +109,13 @@ th.sortable:hover { color: var(--orange2); background: #ffe4d6; }
 th.sortable i { margin-left: 5px; color: #ccc; transition: 0.2s; }
 th.sortable.active i { color: var(--orange); }
 
+/* สไตล์สำหรับ Pagination */
+.pagination { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--line); }
+.page-btn { border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-family: inherit; font-weight: 500; font-size: 14px; min-width: 38px; text-align: center; }
+.page-btn:hover:not(:disabled) { background: #f8f9fa; border-color: #ccc; }
+.page-btn.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 .modal{position:fixed;inset:0;background:rgba(20,24,29,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:50; backdrop-filter: blur(4px);}
 .modal.show{display:flex; animation: fadeIn 0.2s ease;}
 .modalbox{background:#fff;border-radius:24px;max-width:900px;width:100%;max-height:92vh;overflow:auto;padding:30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);}
@@ -130,7 +137,7 @@ th.sortable.active i { color: var(--orange); }
 .ditem b{display:block; font-size: 15px; color: var(--ink);}
 .empty{text-align:center;color:var(--muted);padding:50px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 15px;}
 .empty i { font-size: 48px; color: #ddd; }
-.table-hint { display: none; } /* ซ่อนข้อความเลื่อนตารางบนจอคอมพิวเตอร์ */
+.table-hint { display: none; } 
 
 /* ====================================================
    🔥 อัปเกรด UI สำหรับมือถือ (Responsive Mobile App) 🔥
@@ -140,12 +147,10 @@ th.sortable.active i { color: var(--orange); }
     .banner-left { flex-direction: column; }
     .agent-profile { flex-direction: column; text-align: center; }
     .agent-info { text-align: center; }
-    .banner-right { display: none; } /* ซ่อนข้อความขวาสุดบนมือถือเพื่อประหยัดพื้นที่ */
+    .banner-right { display: none; } 
 
-    /* เผื่อพื้นที่ด้านล่างไว้สำหรับแท็บเมนู */
     .layout { flex-direction: column; padding-bottom: 85px; }
 
-    /* แปลง Sidebar เป็นแถบเมนูแอปด้านล่าง (Bottom Navigation Bar) */
     .side {
         position: fixed;
         bottom: 0;
@@ -162,23 +167,13 @@ th.sortable.active i { color: var(--orange); }
         box-shadow: 0 -5px 20px rgba(0,0,0,0.08);
         overflow-x: auto;
         white-space: nowrap;
-        /* ซ่อน Scrollbar */
         -ms-overflow-style: none; 
         scrollbar-width: none; 
     }
     .side::-webkit-scrollbar { display: none; }
     
-    .side > div {
-        display: flex;
-        flex-direction: row;
-        gap: 5px;
-    }
-    .side > div:last-child {
-        margin-top: 0;
-        margin-left: 5px;
-        padding-left: 5px;
-        border-left: 1px solid var(--line);
-    }
+    .side > div { display: flex; flex-direction: row; gap: 5px; }
+    .side > div:last-child { margin-top: 0; margin-left: 5px; padding-left: 5px; border-left: 1px solid var(--line); }
     
     .side .nav {
         flex-direction: column;
@@ -195,18 +190,15 @@ th.sortable.active i { color: var(--orange); }
     .side .nav.active, .side .nav:hover { background: #fff1e9; color: var(--orange); transform: translateY(-3px); }
     .side .nav i { font-size: 22px; width: auto; text-align: center; }
     
-    /* ซ่อนกล่องของขวัญในแถบเมนูมือถือ */
     .side > div:last-child > div:last-child { display: none; }
 
     main { padding: 15px; width: 100%; overflow: hidden; }
 
-    /* ปรับแต่งสถิติเป็น Grid 2x2 บนมือถือ */
     .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .stat { padding: 15px; border-radius: 16px; flex-direction: column; text-align: center; align-items: center; justify-content: center; gap: 10px;}
     .stat-info { display: flex; flex-direction: column; align-items: center; width: 100%;}
     .stat .num { font-size: 22px; }
     
-    /* ปรับช่องค้นหาและตัวกรองให้กดง่ายขึ้น */
     .toolbar { flex-direction: column; gap: 10px; align-items: stretch; background: transparent; padding: 0; border: none; margin-bottom: 15px;}
     .toolbar > div, .toolbar select, .toolbar button { width: 100%; }
 
@@ -215,7 +207,6 @@ th.sortable.active i { color: var(--orange); }
     .birthday-card { flex-direction: column; text-align: center; gap: 15px; }
     .bday-actions { width: 100%; }
 
-    /* ข้อความแจ้งเตือนว่าตารางเลื่อนได้ */
     .table-hint { 
         display: block; 
         text-align: center; 
@@ -228,6 +219,8 @@ th.sortable.active i { color: var(--orange); }
         padding: 8px;
         border-radius: 8px;
     }
+    
+    .pagination { justify-content: center; flex-wrap: wrap; }
 }
 @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
 </style>
@@ -307,11 +300,11 @@ th.sortable.active i { color: var(--orange); }
     <div class="toolbar">
         <div style="position: relative; flex: 1; min-width: 250px;">
             <i class="fas fa-search" style="position: absolute; left: 15px; top: 15px; color: #aaa;"></i>
-            <input id="search" placeholder="ค้นหาชื่อ / เบอร์โทร / แบบประกัน / LINE ID / ที่อยู่" oninput="render()" style="padding-left: 40px; width: 100%;">
+            <input id="search" placeholder="ค้นหาชื่อ / เบอร์โทร / แบบประกัน / LINE ID / ที่อยู่" oninput="currentPage=1; render()" style="padding-left: 40px; width: 100%;">
         </div>
-        <select id="filterYear" onchange="render()"><option value="">ทุกปี ค.ศ.</option></select>
-        <select id="filterMonth" onchange="render()"><option value="">ทุกเดือน</option></select>
-        <select id="filterGender" onchange="render()"><option value="">ทุกเพศ</option><option>ชาย</option><option>หญิง</option><option>ไม่ระบุ</option></select>
+        <select id="filterYear" onchange="currentPage=1; render()"><option value="">ทุกปี ค.ศ.</option></select>
+        <select id="filterMonth" onchange="currentPage=1; render()"><option value="">ทุกเดือน</option></select>
+        <select id="filterGender" onchange="currentPage=1; render()"><option value="">ทุกเพศ</option><option>ชาย</option><option>หญิง</option><option>ไม่ระบุ</option></select>
         <button class="btn secondary" onclick="clearFilters()"><i class="fas fa-undo"></i> ล้าง</button>
     </div>
 
@@ -337,6 +330,7 @@ th.sortable.active i { color: var(--orange); }
             <tbody id="tbody"></tbody>
         </table>
     </div>
+    <div id="pagination" class="pagination"></div>
     <div class="empty" id="empty"><i class="fas fa-folder-open"></i><div>ยังไม่มีข้อมูลลูกค้า<br><small>กด "เพิ่มลูกค้า" เพื่อเริ่มต้น</small></div></div>
     </section>
     </main></div>
@@ -409,6 +403,8 @@ const months=['มกราคม','กุมภาพันธ์','มีน�
 
 let currentSortColumn = 'startDate';
 let currentSortDirection = 'asc'; 
+let currentPage = 1;
+const itemsPerPage = 25;
 
 function showLoader(text) { document.getElementById('loaderText').textContent = text; document.getElementById('loader').style.display = 'flex'; }
 function hideLoader() { document.getElementById('loader').style.display = 'none'; }
@@ -571,6 +567,7 @@ function toggleSort(column) {
         currentSortColumn = column;
         currentSortDirection = 'asc';
     }
+    currentPage = 1; // กลับไปหน้าแรกเมื่อเปลี่ยนการจัดเรียง
     render();
 }
 
@@ -609,20 +606,60 @@ function sortData(arr) {
     });
 }
 
+function renderPagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    let html = '';
+    if (totalPages > 1) {
+        // ปุ่มย้อนกลับ (<<)
+        html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>`;
+        
+        // คำนวณตัวเลขหน้าที่จะแสดง (แสดงหน้าใกล้เคียง -2 ถึง +2)
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        }
+        
+        // ปุ่มถัดไป (>>)
+        html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>`;
+    }
+    
+    document.getElementById('pagination').innerHTML = html;
+}
+
+function changePage(page) {
+    currentPage = page;
+    render();
+    window.scrollTo({ top: document.querySelector('.panel').offsetTop - 20, behavior: 'smooth' });
+}
+
 function render(){
     checkBirthdays();
     let arr = filtered();
     arr = sortData(arr);
     updateSortIcons();
 
-    document.getElementById('tbody').innerHTML=arr.map((c, index)=>{
+    // ระบบ Pagination
+    const totalItems = arr.length;
+    renderPagination(totalItems);
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedArr = arr.slice(startIndex, endIndex);
+
+    document.getElementById('tbody').innerHTML=paginatedArr.map((c, index)=>{
+        const globalIndex = startIndex + index; // คำนวณเลขลำดับให้ต่อเนื่อง
         const phoneHtml = c.phone ? `<a href="tel:${esc(c.phone)}" class="phone-link"><i class="fas fa-phone-alt"></i> ${esc(c.phone)}</a>` : '';
         const lineHtml = c.lineId ? `<br><span class="line-id-tag" title="LINE ID"><i class="fab fa-line"></i> ${esc(c.lineId)}</span>` : '';
         
         const nameDisplay = `<div style="line-height: 1.3;"><b>${esc(c.firstName)}</b><br><span style="font-size: 13px; color: var(--muted);">${esc(c.lastName)}</span></div>`;
         
         return `<tr>
-            <td style="text-align: center; color: var(--muted); font-weight: 500;">${index + 1}</td>
+            <td style="text-align: center; color: var(--muted); font-weight: 500;">${globalIndex + 1}</td>
             <td><div class="namecell"><img class="avatar" src="${c.photo||'https://ui-avatars.com/api/?background=f1f2f3&color=a0a0a0&name='+esc(c.firstName)}">${nameDisplay}</div></td>
             <td>${esc(c.nickname)}</td>
             <td>${formatDateCE(c.dob)||'-'}</td>
@@ -640,7 +677,7 @@ function render(){
     fillFilters();
 }
 function fillFilters(){const years=[...new Set(data.filter(x=>x.startDate).map(x=>+x.startDate.slice(0,4)))].sort((a,b)=>b-a);const y=document.getElementById('filterYear'),cur=y.value;y.innerHTML='<option value="">ทุกปี ค.ศ.</option>'+years.map(x=>`<option>${x}</option>`).join('');y.value=cur;const m=document.getElementById('filterMonth'),cm=m.value;m.innerHTML='<option value="">ทุกเดือน</option>'+months.map((x,i)=>`<option value="${String(i+1).padStart(2,'0')}">${x}</option>`).join('');m.value=cm}
-function clearFilters(){document.getElementById('search').value='';document.getElementById('filterYear').value='';document.getElementById('filterMonth').value='';document.getElementById('filterGender').value='';render()}
+function clearFilters(){document.getElementById('search').value='';document.getElementById('filterYear').value='';document.getElementById('filterMonth').value='';document.getElementById('filterGender').value='';currentPage=1;render()}
 function showDetail(id){
     const c=data.find(x=>x.id===id);
     const phoneHtml = c.phone ? `<a href="tel:${esc(c.phone)}" class="phone-link" style="margin-top: 5px;"><i class="fas fa-phone-alt"></i> ${esc(c.phone)}</a>` : '-';
