@@ -526,9 +526,9 @@ function filtered(){
 }
 
 // ------------------------------------------------------------------------------------------
-// อัปเดตใหม่เอี่ยมแก้บักมือถือ! เปลี่ยนใช้ Native Center + ฟอนต์สำรอง + หน่วงเวลา 400ms 
+// อัปเดตใหม่เอี่ยมแก้บักมือถือ! เปลี่ยนใช้ Native Center + ฟอนต์สำรอง + จัดการระบบ Download/Share 
 // ------------------------------------------------------------------------------------------
-function generateAndOpenLine(firstName, lastName, lineId) {
+async function generateAndOpenLine(firstName, lastName, lineId) {
     showLoader('กำลังเตรียมรูปภาพและคำอวยพร...');
     const canvas = document.getElementById('hiddenCanvas');
     const ctx = canvas.getContext('2d');
@@ -544,68 +544,64 @@ function generateAndOpenLine(firstName, lastName, lineId) {
         canvas.height = imgH;
         
         const fontSize = Math.floor(imgW * 0.065); 
+        // 1. เพิ่มฟอนต์มาตรฐานของระบบเพื่อป้องกันมือถือหลุดเมื่อดึง Prompt ไม่ทัน
         const fontStr = `600 ${fontSize}px Prompt, Arial, Tahoma, sans-serif`;
         
-        if(document.fonts) {
-            try { await document.fonts.load(fontStr); } catch(e){}
-        }
+        ctx.drawImage(img, 0, 0, imgW, imgH);
         
-        // หน่วงเวลา 400 มิลลิวินาที ให้เบราว์เซอร์ของ LINE โหลดฟอนต์เข้า Canvas ให้เสร็จจริงๆ
-        setTimeout(() => {
-            ctx.drawImage(img, 0, 0, imgW, imgH);
-            
-            ctx.font = fontStr; 
-            ctx.fillStyle = '#ffffff'; 
-            
-            const fName = (firstName || '').trim();
-            const lName = (lastName || '').trim();
-            const fullName = `${fName} ${lName}`;
-            
-            // กลับมาใช้ Center ของ Canvas เพื่อความแม่นยำที่สุด
-            ctx.textAlign = 'center'; 
-            ctx.textBaseline = 'middle';
-            
-            ctx.shadowColor = "rgba(0,0,0,0.3)"; 
-            ctx.shadowOffsetX = 2; 
-            ctx.shadowOffsetY = 2; 
-            ctx.shadowBlur = 5;
-            
-            // วาดชื่อตรงพิกัดกึ่งกลางรูปเป๊ะๆ
-            ctx.fillText(fullName, imgW / 2, imgH * 0.315);
-            
-            const defaultMessage = `สุขสันต์วันเกิดนะคะคุณ${fName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`;
+        ctx.font = fontStr; 
+        ctx.fillStyle = '#ffffff'; 
+        
+        // 2. ลบช่องว่างส่วนเกิน
+        const fName = (firstName || '').trim();
+        const lName = (lastName || '').trim();
+        const fullName = `${fName} ${lName}`;
+        
+        // 3. ใช้ Center ของ Canvas โดยตรงเพราะเราดัน Canvas ออกนอกจอแล้ว (แก้ปัญหา Bug สเกลของมือถือ)
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle';
+        
+        ctx.shadowColor = "rgba(0,0,0,0.3)"; 
+        ctx.shadowOffsetX = 2; 
+        ctx.shadowOffsetY = 2; 
+        ctx.shadowBlur = 5;
+        
+        // วาดชื่อ-สกุลตรงพิกัดกึ่งกลางรูปพอดี
+        ctx.fillText(fullName, imgW / 2, imgH * 0.315);
+        
+        const defaultMessage = `สุขสันต์วันเกิดนะคะคุณ${fName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`;
 
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], `HBD_${fName}.jpg`, { type: 'image/jpeg' });
-                
-                const downloadImage = () => {
-                    const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
-                    const link = document.createElement('a'); 
-                    link.href = finalImageSrc; 
-                    link.download = `HBD_${fName}.jpg`;
-                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                };
+        // 4. ระบบการแชร์ & ดาวน์โหลด
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], `HBD_${fName}.jpg`, { type: 'image/jpeg' });
+            
+            const downloadImage = () => {
+                const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
+                const link = document.createElement('a'); 
+                link.href = finalImageSrc; 
+                link.download = `HBD_${fName}.jpg`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            };
 
-                hideLoader();
+            hideLoader();
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        downloadImage(); 
-                        await navigator.share({
-                            title: 'สุขสันต์วันเกิด',
-                            text: defaultMessage,
-                            files: [file]
-                        });
-                    } catch (err) {
-                        console.log('Cancel share', err);
-                    }
-                } else {
-                    downloadImage();
-                    let lineUrl = lineId ? `https://line.me/ti/p/~${lineId}` : `https://line.me/R/msg/text/?${encodeURIComponent(defaultMessage)}`;
-                    setTimeout(() => { window.open(lineUrl, '_blank'); }, 400);
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    downloadImage(); // โหลดลงเครื่องเผื่อไว้
+                    await navigator.share({
+                        title: 'สุขสันต์วันเกิด',
+                        text: defaultMessage,
+                        files: [file]
+                    });
+                } catch (err) {
+                    console.log('Cancel share', err);
                 }
-            }, 'image/jpeg', 0.9);
-        }, 400); // ดีเลย์ 400ms ตรงนี้คือจุดสำคัญที่แก้ปัญหาเบราว์เซอร์ LINE
+            } else {
+                downloadImage();
+                let lineUrl = lineId ? `https://line.me/ti/p/~${lineId}` : `https://line.me/R/msg/text/?${encodeURIComponent(defaultMessage)}`;
+                setTimeout(() => { window.open(lineUrl, '_blank'); }, 400);
+            }
+        }, 'image/jpeg', 0.9);
     };
     img.onerror = () => { hideLoader(); alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg'"); };
     
