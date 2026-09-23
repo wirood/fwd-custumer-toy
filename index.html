@@ -523,7 +523,11 @@ function generateAndOpenLine(firstName, lastName, lineId) {
     const canvas = document.getElementById('hiddenCanvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
+    
+    // ตั้งค่าให้ดึงรูปภาพแบบข้ามโดเมนได้ (ป้องกันปัญหาจอขาวบน Cloudflare)
+    img.crossOrigin = "Anonymous"; 
     img.src = 'Birthday.jpg'; 
+    
     img.onload = () => {
         canvas.width = img.width; canvas.height = img.height;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -533,17 +537,38 @@ function generateAndOpenLine(firstName, lastName, lineId) {
         ctx.shadowColor = "rgba(0,0,0,0.2)"; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; ctx.shadowBlur = 4;
         ctx.fillText(fullName, canvas.width / 2, canvas.height * 0.315);
         
-        const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
-        const link = document.createElement('a'); link.href = finalImageSrc; link.download = `HBD_${firstName}.jpg`;
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        const defaultMessage = `สุขสันต์วันเกิดนะคะคุณ${firstName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`;
 
-        let defaultMessage = encodeURIComponent(`สุขสันต์วันเกิดนะคะคุณ${firstName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`);
-        let lineUrl = lineId ? `https://line.me/ti/p/~${lineId}` : `https://line.me/R/msg/text/?${defaultMessage}`;
-        setTimeout(() => { window.open(lineUrl, '_blank'); }, 400);
+        // แปลงภาพแคนวาสให้เป็นไฟล์เพื่อเตรียมส่งแชร์
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], `HBD_${firstName}.jpg`, { type: 'image/jpeg' });
+            
+            // ตรวจสอบว่ามือถือรองรับระบบแชร์ไฟล์ตรงๆ หรือไม่ (มือถือส่วนใหญ่รองรับ)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'สุขสันต์วันเกิด',
+                        text: defaultMessage,
+                        files: [file]
+                    });
+                } catch (err) {
+                    console.log('ผู้ใช้ยกเลิกการแชร์ หรือเกิดข้อผิดพลาด:', err);
+                }
+            } else {
+                // หากเปิดในคอมพิวเตอร์ (ไม่รองรับระบบแชร์มือถือ) จะใช้ระบบเดิมคือโหลดไฟล์ + เปิดเว็บ LINE
+                const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
+                const link = document.createElement('a'); 
+                link.href = finalImageSrc; 
+                link.download = `HBD_${firstName}.jpg`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+
+                let lineUrl = lineId ? `https://line.me/ti/p/~${lineId}` : `https://line.me/R/msg/text/?${encodeURIComponent(defaultMessage)}`;
+                setTimeout(() => { window.open(lineUrl, '_blank'); }, 400);
+            }
+        }, 'image/jpeg', 0.9);
     };
-    img.onerror = () => { alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg'"); };
+    img.onerror = () => { alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg' กรุณาตรวจสอบว่าอัปโหลดไฟล์ขึ้นระบบแล้วหรือยัง"); };
 }
-
 function checkBirthdays() {
     const today = new Date(); const currentMonth = today.getMonth() + 1; const currentDay = today.getDate();
     const alertContainer = document.getElementById('birthdayAlerts'); alertContainer.innerHTML = '';
