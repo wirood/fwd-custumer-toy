@@ -524,65 +524,71 @@ function filtered(){
 // ------------------------------------------------------------------------------------------
 // อัปเดตใหม่เอี่ยม! ใช้ Web Share API (สำหรับมือถือ) และบังคับรูปไม่เพี้ยน
 // ------------------------------------------------------------------------------------------
-async function generateAndOpenLine(firstName, lastName, lineId) {
+function generateAndOpenLine(firstName, lastName, lineId) {
+    showLoader('กำลังเตรียมรูปภาพและคำอวยพร...');
     const canvas = document.getElementById('hiddenCanvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     
     img.crossOrigin = "Anonymous"; 
-    img.src = 'Birthday.jpg'; 
     
-    // 1. บังคับโหลดฟอนต์ให้สมบูรณ์ 100% ป้องกันมือถือคำนวณความกว้างตัวอักษรผิดพลาด
-    await document.fonts.ready;
-    
-    img.onload = () => {
-        // 2. บังคับใช้ขนาดจริงของรูป (naturalWidth) ไม่ใช่ขนาดสเกลตามจอ
+    img.onload = async () => {
         const imgW = img.naturalWidth || img.width;
         const imgH = img.naturalHeight || img.height;
         
         canvas.width = imgW; 
         canvas.height = imgH;
         
+        const fontSize = Math.floor(imgW * 0.065); 
+        const fontStr = `600 ${fontSize}px Prompt, sans-serif`;
+        
+        // 1. บังคับโหลดฟอนต์ให้สมบูรณ์ 100% ป้องกันมือถือคำนวณความกว้างตัวอักษรผิดพลาด
+        if(document.fonts) {
+            try { await document.fonts.load(fontStr); } catch(e){}
+        }
+        
         ctx.drawImage(img, 0, 0, imgW, imgH);
         
-        const fontSize = Math.floor(imgW * 0.065); 
-        ctx.font = `600 ${fontSize}px Prompt, sans-serif`; 
+        ctx.font = fontStr; 
         ctx.fillStyle = '#ffffff'; 
         
-        // 3. กำหนดแกนการวาดที่ตรงกลาง และล็อกทิศทางเพื่อไม่ให้หลุดขอบทางขวา
-        ctx.textAlign = 'center'; 
-        ctx.textBaseline = 'middle';
-        ctx.direction = 'ltr'; 
+        // 2. ลบช่องว่างส่วนเกินที่อาจเกิดจากการพิมพ์ผิด (Trim)
+        const fName = (firstName || '').trim();
+        const lName = (lastName || '').trim();
+        const fullName = `${fName} ${lName}`;
         
-        const fullName = `${firstName} ${lastName}`;
+        // 3. ใช้การคำนวณกึ่งกลางแบบ Manual (แก้ปัญหาเบราว์เซอร์มือถือจัด Center เพี้ยน)
+        ctx.textAlign = 'left'; 
+        ctx.textBaseline = 'middle';
+        const textWidth = ctx.measureText(fullName).width;
+        const centerX = (imgW - textWidth) / 2;
+        
         ctx.shadowColor = "rgba(0,0,0,0.2)"; 
         ctx.shadowOffsetX = 2; 
         ctx.shadowOffsetY = 2; 
         ctx.shadowBlur = 4;
         
-        // วาดชื่อ-สกุล โดยยึดตำแหน่ง x คือกึ่งกลางความกว้างของรูประดับพิกเซล
-        ctx.fillText(fullName, imgW / 2, imgH * 0.315);
+        ctx.fillText(fullName, centerX, imgH * 0.315);
         
-        const defaultMessage = `สุขสันต์วันเกิดนะคะคุณ${firstName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`;
+        const defaultMessage = `สุขสันต์วันเกิดนะคะคุณ${fName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`;
 
         // 4. ระบบการแชร์
         canvas.toBlob(async (blob) => {
-            const file = new File([blob], `HBD_${firstName}.jpg`, { type: 'image/jpeg' });
+            const file = new File([blob], `HBD_${fName}.jpg`, { type: 'image/jpeg' });
             
-            // สร้างฟังก์ชันสำหรับดาวน์โหลดไฟล์รูปภาพ
             const downloadImage = () => {
                 const finalImageSrc = canvas.toDataURL('image/jpeg', 0.9);
                 const link = document.createElement('a'); 
                 link.href = finalImageSrc; 
-                link.download = `HBD_${firstName}.jpg`;
+                link.download = `HBD_${fName}.jpg`;
                 document.body.appendChild(link); link.click(); document.body.removeChild(link);
             };
 
-            // ตรวจสอบว่าเปิดจากมือถือ (ที่มีระบบแชร์) ใช่หรือไม่
+            hideLoader();
+
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    // ดาวน์โหลดรูปภาพก่อนการแชร์
-                    downloadImage();
+                    downloadImage(); // โหลดลงเครื่องเผื่อไว้ด้วยเสมอ
                     await navigator.share({
                         title: 'สุขสันต์วันเกิด',
                         text: defaultMessage,
@@ -592,15 +598,16 @@ async function generateAndOpenLine(firstName, lastName, lineId) {
                     console.log('Cancel share', err);
                 }
             } else {
-                // สำหรับการใช้งานบนคอมพิวเตอร์ หรือเบราว์เซอร์ที่ไม่รองรับแชร์
                 downloadImage();
-
                 let lineUrl = lineId ? `https://line.me/ti/p/~${lineId}` : `https://line.me/R/msg/text/?${encodeURIComponent(defaultMessage)}`;
                 setTimeout(() => { window.open(lineUrl, '_blank'); }, 400);
             }
         }, 'image/jpeg', 0.9);
     };
-    img.onerror = () => { alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg'"); };
+    img.onerror = () => { hideLoader(); alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg'"); };
+    
+    // กำหนด src หลัง onload ป้องกันปัญหา Cache โหลดเสร็จก่อน
+    img.src = 'Birthday.jpg'; 
 }
 // ------------------------------------------------------------------------------------------
 
