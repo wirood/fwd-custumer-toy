@@ -229,12 +229,6 @@ th.sortable.active i { color: var(--orange); }
 </head>
 <body>
 
-<!-- ตัวล่อให้ระบบบังคับโหลดฟอนต์จริงๆ ไว้ในหน่วยความจำเครื่อง -->
-<div style="font-family: 'Prompt', sans-serif; position: absolute; left: -9999px; top: -9999px; visibility: hidden; opacity: 0;">ฟอนต์ล่อโหลด Prompt</div>
-
-<!-- เปลี่ยน Canvas จาก display:none เป็นซ่อนไว้นอกจอแทน เพื่อป้องกันบั๊ก Canvas คืนค่าผิดพลาด -->
-<canvas id="hiddenCanvas" style="position: absolute; left: -9999px; top: -9999px; visibility: hidden;"></canvas>
-
 <!-- Loader ประมวลผล -->
 <div id="loader">
     <div class="spinner"></div>
@@ -400,6 +394,8 @@ th.sortable.active i { color: var(--orange); }
 <div class="modal" id="detailModal"><div class="modalbox"><div class="modalhead"><h2><i class="fas fa-address-card"></i> รายละเอียดลูกค้า</h2><button class="btn secondary" style="padding: 8px 12px; color: var(--ink);" onclick="closeModal('detailModal')"><i class="fas fa-times"></i></button></div><div id="detailContent"></div></div></div>
 <div class="modal" id="exportModal"><div class="modalbox"><div class="modalhead"><h2><i class="fas fa-file-export"></i> Preview ก่อนส่งออก</h2><button class="btn secondary" style="padding: 8px 12px; color: var(--ink);" onclick="closeModal('exportModal')"><i class="fas fa-times"></i></button></div><div id="exportPreview" style="margin: 20px 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px;"></div><div class="actions"><button class="btn secondary" style="color: var(--ink);" onclick="closeModal('exportModal')">ปิด</button><button class="btn excel-btn" onclick="exportExcel()"><i class="fas fa-file-excel"></i> ส่งออก Excel</button><button class="btn pdf-btn" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> ส่งออก PDF</button></div></div></div>
 
+<canvas id="hiddenCanvas" style="display:none;"></canvas>
+
 <!-- สคริปต์สำหรับการทำงานและ UI ทั่วไป -->
 <script>
 const defaultAuth = { email: 'toyfwd@gmail.com', pass: 'Aug2518@28' };
@@ -526,9 +522,9 @@ function filtered(){
 }
 
 // ------------------------------------------------------------------------------------------
-// อัปเดตใหม่เอี่ยมแก้บักมือถือ! เปลี่ยนใช้ Native Center + ฟอนต์สำรอง + จัดการระบบ Download/Share 
+// อัปเดตใหม่เอี่ยม! ใช้ Web Share API (สำหรับมือถือ) และบังคับรูปไม่เพี้ยน
 // ------------------------------------------------------------------------------------------
-async function generateAndOpenLine(firstName, lastName, lineId) {
+function generateAndOpenLine(firstName, lastName, lineId) {
     showLoader('กำลังเตรียมรูปภาพและคำอวยพร...');
     const canvas = document.getElementById('hiddenCanvas');
     const ctx = canvas.getContext('2d');
@@ -544,34 +540,39 @@ async function generateAndOpenLine(firstName, lastName, lineId) {
         canvas.height = imgH;
         
         const fontSize = Math.floor(imgW * 0.065); 
-        // 1. เพิ่มฟอนต์มาตรฐานของระบบเพื่อป้องกันมือถือหลุดเมื่อดึง Prompt ไม่ทัน
-        const fontStr = `600 ${fontSize}px Prompt, Arial, Tahoma, sans-serif`;
+        const fontStr = `600 ${fontSize}px Prompt, sans-serif`;
+        
+        // 1. บังคับโหลดฟอนต์ให้สมบูรณ์ 100% ป้องกันมือถือคำนวณความกว้างตัวอักษรผิดพลาด
+        if(document.fonts) {
+            try { await document.fonts.load(fontStr); } catch(e){}
+        }
         
         ctx.drawImage(img, 0, 0, imgW, imgH);
         
         ctx.font = fontStr; 
         ctx.fillStyle = '#ffffff'; 
         
-        // 2. ลบช่องว่างส่วนเกิน
+        // 2. ลบช่องว่างส่วนเกินที่อาจเกิดจากการพิมพ์ผิด (Trim)
         const fName = (firstName || '').trim();
         const lName = (lastName || '').trim();
         const fullName = `${fName} ${lName}`;
         
-        // 3. ใช้ Center ของ Canvas โดยตรงเพราะเราดัน Canvas ออกนอกจอแล้ว (แก้ปัญหา Bug สเกลของมือถือ)
-        ctx.textAlign = 'center'; 
+        // 3. ใช้การคำนวณกึ่งกลางแบบ Manual (แก้ปัญหาเบราว์เซอร์มือถือจัด Center เพี้ยน)
+        ctx.textAlign = 'left'; 
         ctx.textBaseline = 'middle';
+        const textWidth = ctx.measureText(fullName).width;
+        const centerX = (imgW - textWidth) / 2;
         
-        ctx.shadowColor = "rgba(0,0,0,0.3)"; 
+        ctx.shadowColor = "rgba(0,0,0,0.2)"; 
         ctx.shadowOffsetX = 2; 
         ctx.shadowOffsetY = 2; 
-        ctx.shadowBlur = 5;
+        ctx.shadowBlur = 4;
         
-        // วาดชื่อ-สกุลตรงพิกัดกึ่งกลางรูปพอดี
-        ctx.fillText(fullName, imgW / 2, imgH * 0.315);
+        ctx.fillText(fullName, centerX, imgH * 0.315);
         
         const defaultMessage = `สุขสันต์วันเกิดนะคะคุณ${fName} ขอให้มีความสุขมากๆ สุขภาพแข็งแรง จาก นฤมล คำใบ ตัวแทน FWD ค่ะ 🎂🎉`;
 
-        // 4. ระบบการแชร์ & ดาวน์โหลด
+        // 4. ระบบการแชร์
         canvas.toBlob(async (blob) => {
             const file = new File([blob], `HBD_${fName}.jpg`, { type: 'image/jpeg' });
             
@@ -587,7 +588,7 @@ async function generateAndOpenLine(firstName, lastName, lineId) {
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    downloadImage(); // โหลดลงเครื่องเผื่อไว้
+                    downloadImage(); // โหลดลงเครื่องเผื่อไว้ด้วยเสมอ
                     await navigator.share({
                         title: 'สุขสันต์วันเกิด',
                         text: defaultMessage,
@@ -605,6 +606,7 @@ async function generateAndOpenLine(firstName, lastName, lineId) {
     };
     img.onerror = () => { hideLoader(); alert("ไม่พบไฟล์รูปภาพ 'Birthday.jpg'"); };
     
+    // กำหนด src หลัง onload ป้องกันปัญหา Cache โหลดเสร็จก่อน
     img.src = 'Birthday.jpg'; 
 }
 // ------------------------------------------------------------------------------------------
