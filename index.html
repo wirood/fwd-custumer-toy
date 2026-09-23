@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>FWD Customer Portfolio</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,9 +11,9 @@
 <style>
 :root{--orange:#e86614;--orange2:#ff7a1a;--ink:#20252b;--muted:#6f7781;--bg:#f8f9fa;--card:#fff;--line:#e6e8eb;--green:#18a66a; --blue:#2d88ff; --red:#ff4d4d; --shadow:0 4px 12px rgba(0,0,0,0.05);}
 *{box-sizing:border-box}
-body{margin:0;font-family:Prompt,sans-serif;background:var(--bg);color:var(--ink)}
+body{margin:0;font-family:Prompt,sans-serif;background:var(--bg);color:var(--ink); -webkit-tap-highlight-color: transparent;}
 
-#loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #e86614 0%, #ff8c00 100%); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+#loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #e86614 0%, #ff8c00 100%); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;}
 .login-box { background: #fff; padding: 40px; border-radius: 24px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideUp 0.5s ease; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 .login-box img { height: 60px; margin-bottom: 20px; border-radius: 8px; }
@@ -130,20 +130,106 @@ th.sortable.active i { color: var(--orange); }
 .ditem b{display:block; font-size: 15px; color: var(--ink);}
 .empty{text-align:center;color:var(--muted);padding:50px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 15px;}
 .empty i { font-size: 48px; color: #ddd; }
+.table-hint { display: none; } /* ซ่อนข้อความเลื่อนตารางบนจอคอมพิวเตอร์ */
 
+/* ====================================================
+   🔥 อัปเกรด UI สำหรับมือถือ (Responsive Mobile App) 🔥
+   ==================================================== */
 @media(max-width:900px){
     .agent-banner { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
     .banner-left { flex-direction: column; }
     .agent-profile { flex-direction: column; text-align: center; }
     .agent-info { text-align: center; }
-    .side{display:none}
-    .stats{grid-template-columns:repeat(2,1fr)}
-    main{padding:15px}
-    .grid,.detailgrid{grid-template-columns:1fr}
-    .detail{grid-template-columns:1fr}
+    .banner-right { display: none; } /* ซ่อนข้อความขวาสุดบนมือถือเพื่อประหยัดพื้นที่ */
+
+    /* เผื่อพื้นที่ด้านล่างไว้สำหรับแท็บเมนู */
+    .layout { flex-direction: column; padding-bottom: 85px; }
+
+    /* แปลง Sidebar เป็นแถบเมนูแอปด้านล่าง (Bottom Navigation Bar) */
+    .side {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding: 8px 10px;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--line);
+        border-right: none;
+        z-index: 1000;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.08);
+        overflow-x: auto;
+        white-space: nowrap;
+        /* ซ่อน Scrollbar */
+        -ms-overflow-style: none; 
+        scrollbar-width: none; 
+    }
+    .side::-webkit-scrollbar { display: none; }
+    
+    .side > div {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+    }
+    .side > div:last-child {
+        margin-top: 0;
+        margin-left: 5px;
+        padding-left: 5px;
+        border-left: 1px solid var(--line);
+    }
+    
+    .side .nav {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 8px 10px;
+        margin: 0;
+        font-size: 11px;
+        width: 75px;
+        gap: 6px;
+        border-radius: 14px;
+        color: #8b95a1;
+    }
+    .side .nav.active, .side .nav:hover { background: #fff1e9; color: var(--orange); transform: translateY(-3px); }
+    .side .nav i { font-size: 22px; width: auto; text-align: center; }
+    
+    /* ซ่อนกล่องของขวัญในแถบเมนูมือถือ */
+    .side > div:last-child > div:last-child { display: none; }
+
+    main { padding: 15px; width: 100%; overflow: hidden; }
+
+    /* ปรับแต่งสถิติเป็น Grid 2x2 บนมือถือ */
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .stat { padding: 15px; border-radius: 16px; flex-direction: column; text-align: center; align-items: center; justify-content: center; gap: 10px;}
+    .stat-info { display: flex; flex-direction: column; align-items: center; width: 100%;}
+    .stat .num { font-size: 22px; }
+    
+    /* ปรับช่องค้นหาและตัวกรองให้กดง่ายขึ้น */
+    .toolbar { flex-direction: column; gap: 10px; align-items: stretch; background: transparent; padding: 0; border: none; margin-bottom: 15px;}
+    .toolbar > div, .toolbar select, .toolbar button { width: 100%; }
+
+    .grid, .detailgrid { grid-template-columns: 1fr; }
+    .detail { grid-template-columns: 1fr; }
     .birthday-card { flex-direction: column; text-align: center; gap: 15px; }
     .bday-actions { width: 100%; }
+
+    /* ข้อความแจ้งเตือนว่าตารางเลื่อนได้ */
+    .table-hint { 
+        display: block; 
+        text-align: center; 
+        font-size: 13px; 
+        color: var(--orange); 
+        margin-bottom: 10px; 
+        animation: pulse 2s infinite; 
+        font-weight: 500;
+        background: #fff1e9;
+        padding: 8px;
+        border-radius: 8px;
+    }
 }
+@keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
 </style>
 </head>
 <body>
@@ -191,15 +277,15 @@ th.sortable.active i { color: var(--orange); }
     <div class="layout">
     <aside class="side">
         <div>
-            <div class="nav active"><i class="fas fa-home"></i> หน้าหลัก</div>
-            <div class="nav" onclick="openForm()"><i class="fas fa-user-plus"></i> เพิ่มข้อมูลลูกค้า</div>
-            <div class="nav" onclick="fetchData()"><i class="fas fa-sync-alt"></i> รีเฟรชข้อมูลล่าสุด</div>
-            <div class="nav" onclick="exportExcel()"><i class="fas fa-file-excel"></i> ส่งออก Excel</div>
-            <div class="nav" onclick="previewExport()"><i class="fas fa-file-pdf"></i> Preview / PDF</div>
+            <div class="nav active"><i class="fas fa-home"></i><br>หน้าหลัก</div>
+            <div class="nav" onclick="openForm()"><i class="fas fa-user-plus"></i><br>เพิ่มลูกค้า</div>
+            <div class="nav" onclick="fetchData()"><i class="fas fa-sync-alt"></i><br>อัปเดต</div>
+            <div class="nav" onclick="exportExcel()"><i class="fas fa-file-excel"></i><br>Excel</div>
+            <div class="nav" onclick="previewExport()"><i class="fas fa-file-pdf"></i><br>PDF</div>
         </div>
         <div style="margin-top: auto;">
-            <div class="nav" onclick="openPasswordModal()"><i class="fas fa-key"></i> เปลี่ยนรหัสผ่าน</div>
-            <div class="nav danger-nav" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</div>
+            <div class="nav" onclick="openPasswordModal()"><i class="fas fa-key"></i><br>รหัสผ่าน</div>
+            <div class="nav danger-nav" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i><br>ออกระบบ</div>
             <div style="padding: 20px; background: #fffaf7; border-radius: 16px; text-align: center; margin-top: 15px;">
                 <i class="fas fa-gift" style="font-size: 30px; color: var(--orange); margin-bottom: 10px;"></i>
                 <div style="font-weight: 700; color: var(--orange);">ดูแลใส่ใจ</div>
@@ -229,6 +315,7 @@ th.sortable.active i { color: var(--orange); }
         <button class="btn secondary" onclick="clearFilters()"><i class="fas fa-undo"></i> ล้าง</button>
     </div>
 
+    <div class="table-hint"><i class="fas fa-arrows-alt-h"></i> เลื่อนซ้าย-ขวา เพื่อดูตารางข้อมูล</div>
     <div style="overflow-x: auto;">
         <table>
             <thead>
@@ -250,7 +337,7 @@ th.sortable.active i { color: var(--orange); }
             <tbody id="tbody"></tbody>
         </table>
     </div>
-    <div class="empty" id="empty"><i class="fas fa-folder-open"></i><div>ยังไม่มีข้อมูลลูกค้า<br><small>กด "เพิ่มข้อมูลลูกค้า" เพื่อเริ่มต้น</small></div></div>
+    <div class="empty" id="empty"><i class="fas fa-folder-open"></i><div>ยังไม่มีข้อมูลลูกค้า<br><small>กด "เพิ่มลูกค้า" เพื่อเริ่มต้น</small></div></div>
     </section>
     </main></div>
 </div>
@@ -320,7 +407,6 @@ let data = [];
 let photoData = '';
 const months=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-// ตัวแปรสำหรับระบบจัดเรียง (ค่า Default จัดเรียงตามวันเริ่มสัญญา อดีต->ปัจจุบัน)
 let currentSortColumn = 'startDate';
 let currentSortDirection = 'asc'; 
 
@@ -398,7 +484,6 @@ function autoFormatDate(e) {
     else if (v.length >= 3) { input.value = v.substring(0, 2) + '/' + v.substring(2, 4); } else { input.value = v; }
 }
 
-// ฟังก์ชันแปลงวันที่สำหรับการแสดงผลและการจัดเก็บเป็น ค.ศ.
 function formatDateCE(s){if(!s)return '';let d=new Date(s);if(isNaN(d))return '';return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`}
 function fromCEInput(s){if(!s)return '';let p=s.replace(/\s/g,'').split('/');if(p.length!==3)return '';let d=+p[0],m=+p[1],y=+p[2];if(!d||!m||!y)return '';return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
 
@@ -426,7 +511,6 @@ function openPayPopup(){document.getElementById('payModal').classList.add('show'
 function selectPay(vv){document.getElementById('payPeriod').value=vv;document.getElementById('payPeriodBtn').textContent=vv;closeModal('payModal')}
 function v(id){return document.getElementById(id).value.trim()}
 
-// ฟังก์ชันกรองข้อมูล
 function filtered(){
     let q=document.getElementById('search').value.toLowerCase(),y=document.getElementById('filterYear').value,m=document.getElementById('filterMonth').value,g=document.getElementById('filterGender').value;
     return data.filter(c=>{
@@ -480,7 +564,6 @@ function checkBirthdays() {
     }
 }
 
-// ฟังก์ชันสำหรับจัดเรียงข้อมูล
 function toggleSort(column) {
     if (currentSortColumn === column) {
         currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
@@ -497,7 +580,7 @@ function updateSortIcons() {
         if(th) {
             const icon = th.querySelector('i');
             th.classList.remove('active');
-            icon.className = 'fas fa-sort'; // ไอคอนเริ่มต้น
+            icon.className = 'fas fa-sort'; 
             if (currentSortColumn === col) {
                 th.classList.add('active');
                 icon.className = currentSortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
@@ -509,7 +592,6 @@ function updateSortIcons() {
 function sortData(arr) {
     return arr.sort((a, b) => {
         let valA = 0, valB = 0;
-        
         if (currentSortColumn === 'dob') {
             valA = a.dob ? new Date(a.dob).getTime() : 0;
             valB = b.dob ? new Date(b.dob).getTime() : 0;
@@ -521,7 +603,6 @@ function sortData(arr) {
             valA = a.startDate ? new Date(a.startDate).getTime() : 0;
             valB = b.startDate ? new Date(b.startDate).getTime() : 0;
         }
-
         if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
         return 0;
@@ -531,8 +612,6 @@ function sortData(arr) {
 function render(){
     checkBirthdays();
     let arr = filtered();
-    
-    // ทำการจัดเรียงข้อมูลตามเงื่อนไขที่เลือกไว้
     arr = sortData(arr);
     updateSortIcons();
 
@@ -540,7 +619,6 @@ function render(){
         const phoneHtml = c.phone ? `<a href="tel:${esc(c.phone)}" class="phone-link"><i class="fas fa-phone-alt"></i> ${esc(c.phone)}</a>` : '';
         const lineHtml = c.lineId ? `<br><span class="line-id-tag" title="LINE ID"><i class="fab fa-line"></i> ${esc(c.lineId)}</span>` : '';
         
-        // แก้ไขให้ชื่อและนามสกุลอยู่คนละบรรทัด พร้อมปรับดีไซน์
         const nameDisplay = `<div style="line-height: 1.3;"><b>${esc(c.firstName)}</b><br><span style="font-size: 13px; color: var(--muted);">${esc(c.lastName)}</span></div>`;
         
         return `<tr>
@@ -577,7 +655,6 @@ function exportExcel(){const rows=exportRows();if(!rows.length)return alert('ไ
 function previewExport(){const rows=exportRows();document.getElementById('exportPreview').innerHTML=`<div style="overflow:auto"><table><thead><tr>${Object.keys(rows[0]||{ลำดับ:'',ชื่อ:'',นามสกุล:''}).map(k=>`<th>${k}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${Object.values(r).map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="note" style="margin-top: 10px; color: var(--orange);"><i class="fas fa-info-circle"></i> Preview นี้ใช้ชุดข้อมูลตามตัวกรองปัจจุบัน</p>`;document.getElementById('exportModal').classList.add('show')}
 async function exportPDF(){const rows=exportRows();if(!rows.length)return alert('ไม่มีข้อมูลสำหรับส่งออก');const {jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');doc.setFont('helvetica','normal');doc.setFontSize(16);doc.text('FWD Customer Portfolio',14,15);doc.setFontSize(9);let y=25;const cols=['#','Name','Nickname','DOB','Age','Gender','Phone','Plan','Start Date'];const xs=[12,22,65,95,120,135,155,190,240];cols.forEach((h,i)=>doc.text(h,xs[i],y));y+=6;rows.forEach(r=>{if(y>190){doc.addPage();y=15;cols.forEach((h,i)=>doc.text(h,xs[i],y));y+=6}const vals=[r.ลำดับ,`${r.ชื่อ} ${r.นามสกุล}`,r.ชื่อเล่น,r.วันเกิด,r.อายุ,r.เพศ,r.เบอร์โทร,r.แบบประกัน,r.วันเริ่มสัญญา];vals.forEach((v,i)=>doc.text(String(v||'-').slice(0,20),xs[i],y));y+=5});doc.save('FWD_Customer_Portfolio.pdf')}
 
-// Function linkers
 function fetchData() { if(window.fetchDataFromFirebase) window.fetchDataFromFirebase(); }
 function saveCustomer(e) { if(window.saveCustomerToFirebase) window.saveCustomerToFirebase(e); }
 function removeCustomer(id) { if(window.removeCustomerFromFirebase) window.removeCustomerFromFirebase(id); }
